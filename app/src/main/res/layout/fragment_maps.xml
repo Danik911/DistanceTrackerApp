@@ -82,7 +82,7 @@
             android:layout_height="wrap_content"
             android:layout_marginBottom="16dp"
             android:backgroundTint="@color/orange"
-            android:text="@string/reset"
+            android:text="Reset"
             android:visibility="invisible"
             app:icon="@drawable/ic_reset"
             app:layout_constraintBottom_toBottomOf="parent"
