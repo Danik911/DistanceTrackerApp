@@ -25,6 +25,7 @@ import com.danik.distancetrackerapp.util.Permissions.requestBackgroundLocationPe
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
+import com.google.android.gms.maps.model.LatLng
 import com.vmadalin.easypermissions.EasyPermissions
 import com.vmadalin.easypermissions.dialogs.SettingsDialog
 import dagger.hilt.android.AndroidEntryPoint
@@ -36,8 +37,11 @@ class MapsFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMyLocationButto
     EasyPermissions.PermissionCallbacks {
 
     private lateinit var map: GoogleMap
+
     private var _binding: FragmentMapsBinding? = null
     private val binding get() = _binding!!
+
+    private var locationList = mutableListOf<LatLng>()
 
 
     override fun onCreateView(
@@ -77,6 +81,15 @@ class MapsFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMyLocationButto
             isCompassEnabled = false
             isScrollGesturesEnabled = false
 
+        }
+        observeTrackerService()
+    }
+    private fun observeTrackerService(){
+        TrackerService.locationList.observe(viewLifecycleOwner){
+            if (it != null){
+                locationList = it
+                Log.d("LocationList", locationList.toString())
+            }
         }
     }
 
