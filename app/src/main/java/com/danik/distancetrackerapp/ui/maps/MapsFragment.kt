@@ -48,6 +48,9 @@ class MapsFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMyLocationButto
     private var _binding: FragmentMapsBinding? = null
     private val binding get() = _binding!!
 
+    private var startTime = 0L
+    private var stopTime = 0L
+
     private var locationList = mutableListOf<LatLng>()
 
 
@@ -106,6 +109,12 @@ class MapsFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMyLocationButto
                 drawPolyline()
                 followPolyline()
             }
+        }
+        TrackerService.startTime.observe(viewLifecycleOwner){
+            startTime = it
+        }
+        TrackerService.stopTime.observe(viewLifecycleOwner){
+            stopTime = it
         }
     }
 
