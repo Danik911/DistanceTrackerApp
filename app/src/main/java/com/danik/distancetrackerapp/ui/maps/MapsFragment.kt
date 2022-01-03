@@ -3,8 +3,6 @@ package com.danik.distancetrackerapp.ui.maps
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.graphics.Color
-import androidx.fragment.app.Fragment
-
 import android.os.Bundle
 import android.os.CountDownTimer
 import android.util.Log
@@ -12,19 +10,21 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.core.content.ContextCompat
+import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.danik.distancetrackerapp.R
 import com.danik.distancetrackerapp.databinding.FragmentMapsBinding
 import com.danik.distancetrackerapp.service.TrackerService
 import com.danik.distancetrackerapp.ui.maps.MapUtil.setCameraPosition
 import com.danik.distancetrackerapp.util.Constants.ACTION_SERVICE_START
+import com.danik.distancetrackerapp.util.Constants.ACTION_SERVICE_STOP
 import com.danik.distancetrackerapp.util.ExtensionFunctions.disable
+import com.danik.distancetrackerapp.util.ExtensionFunctions.enable
 import com.danik.distancetrackerapp.util.ExtensionFunctions.hide
 import com.danik.distancetrackerapp.util.ExtensionFunctions.show
 import com.danik.distancetrackerapp.util.Permissions.hasBackgroundLocationPermission
 import com.danik.distancetrackerapp.util.Permissions.requestBackgroundLocationPermission
 import com.google.android.gms.maps.CameraUpdateFactory
-
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
@@ -37,6 +37,7 @@ import com.vmadalin.easypermissions.dialogs.SettingsDialog
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+
 
 @AndroidEntryPoint
 class MapsFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMyLocationButtonClickListener,
@@ -61,11 +62,14 @@ class MapsFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMyLocationButto
             onStartButtonClicked()
             Log.d("MapActivity", "Button clicked")
         }
-        binding.stopButton.setOnClickListener { }
+        binding.stopButton.setOnClickListener {
+            onStopButtonClicked()
+        }
         binding.resetButton.setOnClickListener { }
 
         return binding.root
     }
+
 
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -95,6 +99,10 @@ class MapsFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMyLocationButto
         TrackerService.locationList.observe(viewLifecycleOwner) {
             if (it != null) {
                 locationList = it
+                if(locationList.size > 1){
+                    binding.stopButton.enable()
+                }
+
                 drawPolyline()
                 followPolyline()
             }
@@ -136,6 +144,13 @@ class MapsFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMyLocationButto
             requestBackgroundLocationPermission(this)
         }
     }
+    private fun onStopButtonClicked() {
+        stopForegroundService()
+        binding.startButton.hide()
+        binding.startButton.show()
+    }
+
+
 
     private fun startCountDown() {
         binding.timerTextView.show()
@@ -170,6 +185,11 @@ class MapsFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMyLocationButto
         }
         timer.start()
     }
+    private fun stopForegroundService() {
+        binding.startButton.disable()
+        sendActionCommandToService(ACTION_SERVICE_STOP)
+    }
+
 
     private fun sendActionCommandToService(action: String) {
         Intent(

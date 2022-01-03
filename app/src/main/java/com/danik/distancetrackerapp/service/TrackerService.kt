@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.NotificationManager.IMPORTANCE_LOW
+import android.content.Context
 import android.content.Intent
 import android.location.Location
 import android.os.Build
@@ -80,12 +81,16 @@ class TrackerService : LifecycleService() {
                 }
                 ACTION_SERVICE_STOP -> {
                     started.postValue(false)
+                    stopForegroundService()
                 }
                 else -> {}
             }
         }
         return super.onStartCommand(intent, flags, startId)
     }
+
+
+
     private fun startForegroundService(){
         createNotificationChannel()
         startForeground(
@@ -93,6 +98,17 @@ class TrackerService : LifecycleService() {
             notification.build()
         )
     }
+    private fun stopForegroundService() {
+        removeLocationUpdates()
+        (getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager).cancel(
+            NOTIFICATION_ID
+        )
+        stopForeground(true)
+        stopSelf()
+    }
+
+
+
     @SuppressLint("MissingPermission")
     private fun startLocationUpdates(){
         val locationRequest = LocationRequest.create().apply {
@@ -106,6 +122,9 @@ class TrackerService : LifecycleService() {
             locationCallback,
             Looper.getMainLooper()
         )
+    }
+    private fun removeLocationUpdates() {
+        fusedLocationProviderClient.removeLocationUpdates(locationCallback)
     }
     private fun createNotificationChannel(){
         if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O){
