@@ -5,6 +5,9 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <data>
+        <variable
+            name="tracking"
+            type="com.danik.distancetrackerapp.ui.maps.MapsFragment" />
 
     </data>
 
@@ -47,6 +50,7 @@
             android:textStyle="bold"
             android:textSize="20sp"
             android:textColor="@color/black"
+            observeTracking="@{tracking.started}"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.5"
@@ -72,6 +76,7 @@
             android:backgroundTint="@color/red"
             android:text="@string/stop"
             android:visibility="invisible"
+            observeTracking="@{tracking.started}"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent" />

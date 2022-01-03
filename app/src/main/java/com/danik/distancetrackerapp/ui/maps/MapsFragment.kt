@@ -11,6 +11,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.lifecycleScope
 import com.danik.distancetrackerapp.R
 import com.danik.distancetrackerapp.databinding.FragmentMapsBinding
@@ -28,10 +29,7 @@ import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
-import com.google.android.gms.maps.model.ButtCap
-import com.google.android.gms.maps.model.JointType
-import com.google.android.gms.maps.model.LatLng
-import com.google.android.gms.maps.model.PolylineOptions
+import com.google.android.gms.maps.model.*
 import com.vmadalin.easypermissions.EasyPermissions
 import com.vmadalin.easypermissions.dialogs.SettingsDialog
 import dagger.hilt.android.AndroidEntryPoint
@@ -51,6 +49,8 @@ class MapsFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMyLocationButto
     private var startTime = 0L
     private var stopTime = 0L
 
+    val started = MutableLiveData(false)
+
     private var locationList = mutableListOf<LatLng>()
 
 
@@ -60,10 +60,12 @@ class MapsFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMyLocationButto
         savedInstanceState: Bundle?
     ): View {
         _binding = FragmentMapsBinding.inflate(inflater, container, false)
+        binding.lifecycleOwner = this
+        binding.tracking = this
+
 
         binding.startButton.setOnClickListener {
             onStartButtonClicked()
-            Log.d("MapActivity", "Button clicked")
         }
         binding.stopButton.setOnClickListener {
             onStopButtonClicked()
@@ -72,7 +74,6 @@ class MapsFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMyLocationButto
 
         return binding.root
     }
-
 
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -102,7 +103,7 @@ class MapsFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMyLocationButto
         TrackerService.locationList.observe(viewLifecycleOwner) {
             if (it != null) {
                 locationList = it
-                if(locationList.size > 1){
+                if (locationList.size > 1) {
                     binding.stopButton.enable()
                 }
 
@@ -110,13 +111,20 @@ class MapsFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMyLocationButto
                 followPolyline()
             }
         }
-        TrackerService.startTime.observe(viewLifecycleOwner){
+        TrackerService.started.observe(viewLifecycleOwner){
+            started.value = it
+        }
+        TrackerService.startTime.observe(viewLifecycleOwner) {
             startTime = it
         }
-        TrackerService.stopTime.observe(viewLifecycleOwner){
+        TrackerService.stopTime.observe(viewLifecycleOwner) {
             stopTime = it
+            if (stopTime != 0L) {
+                showBiggerPicture()
+            }
         }
     }
+
 
     private fun drawPolyline() {
         val polyline = map.addPolyline(
@@ -153,12 +161,12 @@ class MapsFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMyLocationButto
             requestBackgroundLocationPermission(this)
         }
     }
+
     private fun onStopButtonClicked() {
         stopForegroundService()
-        binding.startButton.hide()
+        binding.stopButton.hide()
         binding.startButton.show()
     }
-
 
 
     private fun startCountDown() {
@@ -194,6 +202,7 @@ class MapsFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMyLocationButto
         }
         timer.start()
     }
+
     private fun stopForegroundService() {
         binding.startButton.disable()
         sendActionCommandToService(ACTION_SERVICE_STOP)
@@ -208,6 +217,19 @@ class MapsFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMyLocationButto
             this.action = action
             requireContext().startService(this)
         }
+    }
+
+    private fun showBiggerPicture() {
+        val bounds = LatLngBounds.Builder()
+        for (location in locationList) {
+            bounds.include(location)
+        }
+        map.animateCamera(
+            CameraUpdateFactory.newLatLngBounds(
+                bounds.build(), 100
+            ),
+            2000, null
+        )
     }
 
 
