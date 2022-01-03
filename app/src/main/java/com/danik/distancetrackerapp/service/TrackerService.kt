@@ -14,6 +14,8 @@ import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.MutableLiveData
+import com.danik.distancetrackerapp.ui.maps.MapUtil
+import com.danik.distancetrackerapp.ui.maps.MapUtil.calculateTheDistance
 import com.danik.distancetrackerapp.util.Constants.ACTION_SERVICE_START
 import com.danik.distancetrackerapp.util.Constants.ACTION_SERVICE_STOP
 import com.danik.distancetrackerapp.util.Constants.LOCATION_FASTEST_UPDATE_INTERVAL
@@ -52,17 +54,20 @@ class TrackerService : LifecycleService() {
         locationList.postValue(mutableListOf())
     }
 
-    private val locationCallback = object : LocationCallback(){
+    private val locationCallback = object : LocationCallback() {
         override fun onLocationResult(result: LocationResult) {
             super.onLocationResult(result)
             result.locations.let { locations ->
                 for (location in locations) {
                     updateLocationList(location)
+                    updateNotificationPeriodically()
                 }
             }
         }
     }
-    private fun updateLocationList(location: Location){
+
+
+    private fun updateLocationList(location: Location) {
         val newLatLng = LatLng(location.latitude, location.longitude)
         locationList.value?.apply {
             add(newLatLng)
@@ -95,14 +100,14 @@ class TrackerService : LifecycleService() {
     }
 
 
-
-    private fun startForegroundService(){
+    private fun startForegroundService() {
         createNotificationChannel()
         startForeground(
             NOTIFICATION_ID,
             notification.build()
         )
     }
+
     private fun stopForegroundService() {
         removeLocationUpdates()
         (getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager).cancel(
@@ -114,9 +119,8 @@ class TrackerService : LifecycleService() {
     }
 
 
-
     @SuppressLint("MissingPermission")
-    private fun startLocationUpdates(){
+    private fun startLocationUpdates() {
         val locationRequest = LocationRequest.create().apply {
             interval = LOCATION_UPDATE_INTERVAL
             fastestInterval = LOCATION_FASTEST_UPDATE_INTERVAL
@@ -130,11 +134,21 @@ class TrackerService : LifecycleService() {
         )
         startTime.postValue(System.currentTimeMillis())
     }
+
     private fun removeLocationUpdates() {
         fusedLocationProviderClient.removeLocationUpdates(locationCallback)
     }
-    private fun createNotificationChannel(){
-        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O){
+
+    private fun updateNotificationPeriodically() {
+        notification.apply {
+            setContentTitle("Distance Traveled")
+            setContentText(locationList.value?.let { calculateTheDistance(it) } + "km")
+        }
+        notificationManager.notify(NOTIFICATION_ID, notification.build())
+    }
+
+    private fun createNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 NOTIFICATION_CHANNEL_ID,
                 NOTIFICATION_CHANNEL_NAME,
