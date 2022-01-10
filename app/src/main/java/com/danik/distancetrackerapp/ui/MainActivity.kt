@@ -23,8 +23,8 @@ class MainActivity : AppCompatActivity() {
             .findFragmentById(R.id.navHostFragment) as NavHostFragment
         navController = navHostFragment.navController
 
-        if(hasLocationPermission(this)){
+      /*  if(hasLocationPermission(this)){
             navController.navigate(R.id.action_permissionFragment_to_mapsFragment)
-        }
+        }*/
     }
 }

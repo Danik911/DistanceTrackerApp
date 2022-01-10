@@ -10,7 +10,10 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
 import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.ViewModelProviders
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.danik.distancetrackerapp.R
@@ -46,6 +49,8 @@ import kotlinx.coroutines.launch
 class MapsFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMyLocationButtonClickListener,
     GoogleMap.OnMarkerClickListener,
     EasyPermissions.PermissionCallbacks {
+
+    private val viewModel: MapsViewModel by viewModels()
 
     private lateinit var map: GoogleMap
     private lateinit var fusedLocationProviderClient: FusedLocationProviderClient
@@ -86,6 +91,12 @@ class MapsFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMyLocationButto
         fusedLocationProviderClient =
             LocationServices.getFusedLocationProviderClient(requireActivity())
 
+        if (viewModel.showHint.value == false) {
+            binding.hintTextView.hide()
+
+        }
+
+
         return binding.root
     }
 
@@ -94,9 +105,12 @@ class MapsFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMyLocationButto
         super.onViewCreated(view, savedInstanceState)
         val mapFragment = childFragmentManager.findFragmentById(R.id.map) as SupportMapFragment?
         mapFragment?.getMapAsync(this)
+        if (locationList.isNotEmpty()) {
+            binding.hintTextView.hide()
+        }
     }
 
-    @SuppressLint("MissingPermission")
+    @SuppressLint("MissingPermission", "PotentialBehaviorOverride")
     override fun onMapReady(googleMap: GoogleMap) {
         map = googleMap
         map.isMyLocationEnabled = true
@@ -139,6 +153,7 @@ class MapsFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMyLocationButto
                 displayResults()
             }
         }
+
     }
 
 
@@ -285,18 +300,19 @@ class MapsFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMyLocationButto
                 lastLocation.result.latitude,
                 lastLocation.result.longitude
             )
-            for (polyline in polylineList) {
-                polyline.remove()
-            }
             map.animateCamera(
                 CameraUpdateFactory.newCameraPosition(
                     setCameraPosition(lastKnownLocation)
                 )
             )
-            locationList.clear()
+            for (polyline in polylineList) {
+                polyline.remove()
+            }
             for (marker in markerList) {
                 marker.remove()
             }
+            locationList.clear()
+            markerList.clear()
             binding.resetButton.hide()
             binding.startButton.show()
 
@@ -338,6 +354,9 @@ class MapsFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMyLocationButto
             binding.hintTextView.hide()
             binding.startButton.show()
         }
+        viewModel.hideHint()
+
+
         return false
     }
 

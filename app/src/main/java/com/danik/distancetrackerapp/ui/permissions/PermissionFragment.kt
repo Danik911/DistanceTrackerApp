@@ -21,7 +21,9 @@ class PermissionFragment : Fragment(), EasyPermissions.PermissionCallbacks {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
+        if (hasLocationPermission(requireContext())) {
+            findNavController().navigate(R.id.action_permissionFragment_to_mapsFragment)
+        }
     }
 
     override fun onCreateView(

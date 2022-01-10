@@ -43,6 +43,7 @@ class TrackerService : LifecycleService() {
         val started = MutableLiveData<Boolean>()
         val startTime = MutableLiveData<Long>()
         val stopTime = MutableLiveData<Long>()
+        val showHint = MutableLiveData<Boolean>()
 
         val locationList = MutableLiveData<MutableList<LatLng>>()
     }
@@ -52,7 +53,9 @@ class TrackerService : LifecycleService() {
         startTime.postValue(0L)
         stopTime.postValue(0L)
         locationList.postValue(mutableListOf())
+        showHint.postValue(true)
     }
+
 
     private val locationCallback = object : LocationCallback() {
         override fun onLocationResult(result: LocationResult) {
@@ -116,6 +119,7 @@ class TrackerService : LifecycleService() {
         stopForeground(true)
         stopSelf()
         stopTime.postValue(System.currentTimeMillis())
+
     }
 
 
